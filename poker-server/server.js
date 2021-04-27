@@ -211,7 +211,7 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(3000);
+httpServer.listen(process.env.PORT);
 
 // create a callback to wait until there are two concurrent connections
 
