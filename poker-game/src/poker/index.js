@@ -17,7 +17,8 @@ class Poker extends React.Component {
         this.handleChangeBetSize = this.handleChangeBetSize.bind(this);
 	}
     componentDidMount () {
-        const socket = io("wss://poker-server-2.herokuapp.com/", {
+        const serverAddress = process.env.NODE_ENV == 'development' ? "ws://localhost:3000" : "wss://poker-server-2.herokuapp.com/"; 
+        const socket = io(serverAddress, {
             reconnectionDelayMax: 10000,
             transports: ["websocket"]
         });

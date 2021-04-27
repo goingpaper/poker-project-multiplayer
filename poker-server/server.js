@@ -13,16 +13,6 @@ const RAISE = "raise";
 
 const connected = {};
 
-// var currentHand = {
-//   potSize: 15,
-//   playerTurn: null, // playerId
-//   boardTurn: null, // ie. 0,1,2,3 preflop, flop, turn, river
-//   board: null,
-//   playerHands: null, {1231234: AcKd, 435243: 5d6c}
-//   playerStacks: null, {1231234: 1100, 435243: 900}
-//   currentTurnBets: null ie. {1231234: 30, 435243: 90} player 1 bets 30 and player 2 raises to 90
-// };
-
 var currentHand = null;
 
 const getOpponentId = (currentSocketId) => {
@@ -202,6 +192,8 @@ io.on("connection", (socket) => {
           currentHand.potSize += raiseSize;
           currentHand.lastRaiser = playerId;
           break;
+        case FOLD:
+          currentHand = createNewHand(playerId, opponentId);
         default:
           // code block
       }
@@ -211,7 +203,7 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(process.env.PORT);
+httpServer.listen(process.env.PORT || 3000);
 
 // create a callback to wait until there are two concurrent connections
 
