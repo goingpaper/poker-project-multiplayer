@@ -6,6 +6,11 @@ const {
   v4: uuidv4,
 } = require('uuid');
 
+const CHECK = "check";
+const CALL = "call";
+const FOLD = "fold";
+const RAISE = "raise";
+
 const connected = {};
 
 // var currentHand = {
@@ -20,6 +25,15 @@ const connected = {};
 
 var currentHand = null;
 
+const getOpponentId = (currentSocketId) => {
+
+  const filterArray = Object.keys(connected).filter((playerId) => {
+      return playerId != currentSocketId;
+  })
+  const opponentId = filterArray[0];
+  return opponentId;
+}
+
 const createDeck = () => {
   const suits = ["c","h","d","s"];
   const numbers = ["A","K","Q","J","2","3","4","5","6","7","8","9","T"];
@@ -33,7 +47,7 @@ const createDeck = () => {
   return deck;
 }
 
-const createBoardString = (deck) => {
+const createBoardArray = (deck) => {
   var i = 0
   var cards = [];
   for (var i = 0; i<5; i++) {
@@ -72,7 +86,7 @@ const createNewHand = (player1Id, player2Id) => {
   idPlayerHands[player1Id] = playerHands[0];
   idPlayerHands[player2Id] = playerHands[1];
 
-  const boardString = createBoardString(currentDeck);
+  const boardArray = createBoardArray(currentDeck);
 
   var playerStacks = {};
   playerStacks[player1Id] = 1000;
@@ -88,10 +102,13 @@ const createNewHand = (player1Id, player2Id) => {
     potSize: 15,
     playerTurn: playerTurn,
     boardTurn: 0,
-    board: boardString,
+    board: boardArray,
     playerHands: idPlayerHands,
     playerStacks: playerStacks,
-    currentTurnBets: currentTurnBets
+    currentTurnBets: currentTurnBets,
+    buttonPlayer: playerTurn,
+    bigBlindPlayer: actSecond,
+    lastRaiser: null
   };
 }
 
@@ -122,12 +139,74 @@ io.on("connection", (socket) => {
     io.emit("receiveHandState", JSON.stringify(currentHand));
   }
   socket.on("playerAction", (action) => {
-    //data will be JSON
+
     actionParsed = JSON.parse(action);
-    console.log(action);
     // check if the player sending the action is allowed to act
     if (currentHand != null && currentHand.playerTurn == socket.id) {
-      
+      const playerId = socket.id;
+      const opponentId = getOpponentId(playerId);
+      switch(actionParsed.actionType) {
+        case CALL:
+          // find the difference between calling player current bet and aggressers current bet
+          // subtract that amount from calling players stack and add to the potSize
+
+          // if - last raiser is null then dont increase turn count but switch to next player
+          // else - increase turn count and reset playerTurn to big blind player
+          console.log("call");
+          const callAmount = currentHand.currentTurnBets[opponentId] - currentHand.currentTurnBets[playerId];
+          currentHand.playerStacks[playerId] -= callAmount
+          currentHand.potSize += callAmount;
+          currentHand.currentTurnBets[playerId] += callAmount;
+          if (currentHand.lastRaiser == null) {
+            nextPlayer = opponentId;
+            currentHand.playerTurn = nextPlayer;
+          } else {
+            currentHand.playerTurn = currentHand.bigBlindPlayer
+            currentHand.boardTurn = currentHand.boardTurn + 1
+
+            var currentTurnBets = {};
+            currentTurnBets[playerId] = 0;
+            currentTurnBets[opponentId] = 0;
+            currentHand.currentTurnBets = currentTurnBets;
+            currentHand.lastRaiser = null;
+          }
+          if (currentHand.playerStacks[playerId] == 0 && currentHand.playerStacks[opponentId] == 0) {
+            currentHand.boardTurn = 4;
+          }
+          break;
+        case CHECK:
+          console.log("check");
+          if (currentHand.boardTurn == 0 && currentHand.bigBlindPlayer == playerId) {
+            currentHand.playerTurn = currentHand.bigBlindPlayer;
+            currentHand.boardTurn = currentHand.boardTurn + 1;
+
+            var currentTurnBets = {};
+            currentTurnBets[playerId] = 0;
+            currentTurnBets[opponentId] = 0;
+            currentHand.currentTurnBets = currentTurnBets;
+          } else {
+            if (currentHand.bigBlindPlayer == playerId) {
+              currentHand.playerTurn = opponentId;
+            } else {
+              currentHand.playerTurn = currentHand.bigBlindPlayer
+              currentHand.boardTurn = currentHand.boardTurn + 1
+            }
+          }
+          break;
+        case RAISE:
+          console.log("raise");
+          const raiseSize = actionParsed.betSize - currentHand.currentTurnBets[playerId];
+          currentHand.currentTurnBets[playerId] = actionParsed.betSize;
+          currentHand.playerStacks[playerId] -= raiseSize;
+          currentHand.playerTurn = opponentId;
+          currentHand.potSize += raiseSize;
+          currentHand.lastRaiser = playerId;
+          break;
+        default:
+          // code block
+      }
+      // emit to all clients the updated hand state
+      io.emit("receiveHandState", JSON.stringify(currentHand));
     }
   });
 });
