@@ -2,11 +2,21 @@
     "name": "pokerserver",
     "version": "0.0.1",
     "description": "poker server mvp",
+    "type": "module",
     "dependencies": {
+        "pokersolver": "^2.1.4",
         "socket.io": "^4.0.1",
         "uuid": "^8.3.2"
     },
     "scripts": {
-        "server": "node ./server.js"
+        "server": "nodemon --exec babel-node ./server.js"
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.13.16",
+        "@babel/core": "^7.14.0",
+        "@babel/node": "^7.13.13",
+        "@babel/plugin-proposal-class-properties": "^7.13.0",
+        "@babel/preset-env": "^7.14.0",
+        "nodemon": "^2.0.7"
     }
 }

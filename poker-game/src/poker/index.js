@@ -60,6 +60,7 @@ class Poker extends React.Component {
         return opponentId;
     }
 
+    // will eventually become recieveGameState??
     receiveHandState = (handState) => {
         const { socketId } = this.state;
         console.log(JSON.parse(handState));
