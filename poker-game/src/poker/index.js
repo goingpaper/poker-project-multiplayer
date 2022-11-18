@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import Board from './board';
 import { BIG_BLIND } from './config';
+import Hand from './hand';
 
 class Poker extends React.Component {
     constructor(props) {
@@ -133,37 +134,39 @@ class Poker extends React.Component {
             const isPlayerTurn = socketId == handState.playerTurn;
             const isCheckAllowed = handState.currentTurnBets[socketId] == handState.currentTurnBets[opponentId];
             const isCallAllowed = handState.currentTurnBets[socketId] < handState.currentTurnBets[opponentId];
-            console.log(isCallAllowed);
             const isRaiseAllowed = handState.currentTurnBets[opponentId] < handState.playerStacks[socketId];
+
+            const playerBets = {player: handState.currentTurnBets[socketId], opponent: handState.currentTurnBets[opponentId]}
             return <div>
-            <p>Poker</p>
-            <React.Fragment>
-                <div>opponent stack + bet {turn == 4 && "+ hand"}</div>
-                <div>{handState.playerStacks[opponentId]} - {handState.currentTurnBets[opponentId]} {turn == 4 && "- "+ handState.playerHands[opponentId]}</div>
-                <div>
-                    <Board boardArray={handState.board} turn={handState.boardTurn}/>
-                </div>
-                <div>PotSize - {handState.potSize}</div>
-                <div>your hand + stack + bet </div>
-                <div>{handState.playerHands[socketId]} - {handState.playerStacks[socketId]} - {handState.currentTurnBets[socketId]}</div>
-                {isPlayerTurn && (
-                    <React.Fragment>
-                        <input 
-                            type="number" 
-                            name="bet size" 
-                            value={betSize} 
-                            min={this.calculateMinRaiseSize(handState.currentTurnBets[opponentId], handState.currentTurnBets[socketId], handState.lastRaiser)}
-                            max={handState.currentTurnBets[socketId] + handState.playerStacks[socketId]}  
-                            onChange={this.handleChangeBetSize} />
-                        <button onClick={this.fold}>Fold</button>
-                        {isCheckAllowed && <button onClick={this.check}>Check</button>}
-                        {isCallAllowed && <button onClick={this.call}>Call</button>}
-                        {isRaiseAllowed && <button onClick={this.raise}>Raise</button>}
-                    </React.Fragment>
-                )}
-                
-            </React.Fragment>
-        </div>
+                <React.Fragment>
+                    <div>opponent stack {turn == 4 && "+ hand"}</div>
+                    <div>{handState.playerStacks[opponentId]} {turn == 4 && "- "+ handState.playerHands[opponentId]}</div>
+                    <Hand className="opponentHand" hidden cardAmount={2}/>
+                    <Board boardArray={handState.board} 
+                        turn={handState.boardTurn} 
+                        potSize={handState.potSize} 
+                        playerBets={playerBets}/>
+                    <Hand className="playerHand" handArray={handState.playerHands[socketId]}/>
+                    <div>stack </div>
+                    <div> {handState.playerStacks[socketId]}</div>
+                    {isPlayerTurn && (
+                        <React.Fragment>
+                            <input 
+                                type="number" 
+                                name="bet size" 
+                                value={betSize} 
+                                min={this.calculateMinRaiseSize(handState.currentTurnBets[opponentId], handState.currentTurnBets[socketId], handState.lastRaiser)}
+                                max={handState.currentTurnBets[socketId] + handState.playerStacks[socketId]}  
+                                onChange={this.handleChangeBetSize} />
+                            <button onClick={this.fold}>Fold</button>
+                            {isCheckAllowed && <button onClick={this.check}>Check</button>}
+                            {isCallAllowed && <button onClick={this.call}>Call</button>}
+                            {isRaiseAllowed && <button onClick={this.raise}>Raise</button>}
+                        </React.Fragment>
+                    )}
+                    
+                </React.Fragment>
+            </div>
         } else {
             return <div>
                 <p>Poker - Loading ...</p>

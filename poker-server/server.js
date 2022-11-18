@@ -5,7 +5,7 @@ const httpServer = http.createServer();
 const io = new Server(httpServer, {});
 
 import { RAISE, CALL, FOLD, CHECK } from "./constants.js";
-import createNewHand from "./util/createhand.js";
+import updateGameStateOnHandEnd from "./util/createhand.js";
 import getWinner from "./util/getwinner.js";
 
 const connected = {};
@@ -44,7 +44,7 @@ io.on("connection", (socket) => {
     // setup a new hand
     // create a playerTurn
     const players = Object.keys(connected);
-    currentHand = createNewHand(players[0], players[1]);
+    currentHand = updateGameStateOnHandEnd(players[0], players[1]);
     io.emit("receiveHandState", JSON.stringify(currentHand));
   }
   socket.on("playerAction", (action) => {
@@ -62,8 +62,9 @@ io.on("connection", (socket) => {
           // if - last raiser is null then dont increase turn count but switch to next player
           // else - increase turn count and reset playerTurn to big blind player
           console.log("call");
-          const callAmount = currentHand.currentTurnBets[opponentId] - currentHand.currentTurnBets[playerId];
-          currentHand.playerStacks[playerId] -= callAmount
+          const callDifference = currentHand.currentTurnBets[opponentId] - currentHand.currentTurnBets[playerId];
+          const callAmount = currentHand.playerStacks[playerId] < callDifference ? currentHand.playerStacks[playerId] : callDifference;
+          currentHand.playerStacks[playerId] -= callAmount;
           currentHand.potSize += callAmount;
           currentHand.currentTurnBets[playerId] += callAmount;
           if (currentHand.lastRaiser == null) {
@@ -78,7 +79,7 @@ io.on("connection", (socket) => {
             currentHand.currentTurnBets = currentTurnBets;
             currentHand.lastRaiser = null;
           }
-          if (currentHand.playerStacks[playerId] == 0 && currentHand.playerStacks[opponentId] == 0) {
+          if (currentHand.playerStacks[playerId] == 0 || currentHand.playerStacks[opponentId] == 0) {
             currentHand.boardTurn = 4;
           }
           break;
@@ -112,7 +113,7 @@ io.on("connection", (socket) => {
           break;
         case FOLD:
           currentHand.playerStacks[opponentId] += currentHand.potSize;
-          currentHand = createNewHand(playerId, opponentId, currentHand.playerStacks);
+          currentHand = updateGameStateOnHandEnd(playerId, opponentId, currentHand.playerStacks);
           currentHand.winner = opponentId;
         default:
           // code block
@@ -126,8 +127,9 @@ io.on("connection", (socket) => {
         } else {
           const winningPlayer = winningPlayerArray[0].playerNumber == 1 ? playerId : opponentId;
           currentHand.playerStacks[winningPlayer] += currentHand.potSize;
+          // can emit a message here and set a timeout to start the next hand
         }
-        currentHand = createNewHand(playerId, opponentId, currentHand.playerStacks);
+        currentHand = updateGameStateOnHandEnd(playerId, opponentId, currentHand.playerStacks);
       }
       // emit to all clients the updated hand state
       io.emit("receiveHandState", JSON.stringify(currentHand));

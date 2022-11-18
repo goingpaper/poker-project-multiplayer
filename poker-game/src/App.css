@@ -36,3 +36,27 @@
     transform: rotate(360deg);
   }
 }
+
+.board {
+  background-image: url( './pokerboard.svg' );
+  background-repeat:no-repeat;
+  background-size: cover;
+  height:400px;
+  width:800px;
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column
+}
+
+.opponentBet {
+  margin-bottom: auto;
+}
+
+.playerBet {
+  margin-top: auto;
+}
+
+.potAndCommunity {
+  position: absolute
+}

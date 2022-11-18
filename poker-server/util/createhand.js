@@ -30,12 +30,19 @@ const createPlayerHands = (deck) => {
       cards.push(deck[randomNumber]);
       deck.splice(randomNumber, 1);
     }
-    const player1Hand = cards[0] + cards[1];
-    const player2Hand = cards[2] + cards[3];
+    const player1Hand = [cards[0], cards[1]];
+    const player2Hand = [cards[2], cards[3]];
     return [player1Hand, player2Hand];
 }
 
-const createNewHand = (player1Id, player2Id, previousHandStacks) => {
+const updateGameStateOnHandEnd = (player1Id, player2Id, previousHandStacks) => {
+
+    if (previousHandStacks && (previousHandStacks[player1Id] == 0 || previousHandStacks[player2Id] == 0)) {
+      return {
+        playerStacks: previousHandStacks,
+        gameWinner: previousHandStacks[player1Id] == 0 ? player2Id : player1Id
+      };
+    }
 
     var playerTurn = player1Id;
     var actSecond = player2Id;
@@ -60,10 +67,10 @@ const createNewHand = (player1Id, player2Id, previousHandStacks) => {
     } else {
       playerStacks[player1Id] = 1000;
       playerStacks[player2Id] = 1000;
-      playerStacks[playerTurn] -= 5;
-      playerStacks[actSecond] -= 10;
     }
-    
+    playerStacks[playerTurn] -= 5;
+    playerStacks[actSecond] -= 10;
+
     var currentTurnBets = {};
     currentTurnBets[playerTurn] = 5;
     currentTurnBets[actSecond] = 10;
@@ -82,4 +89,4 @@ const createNewHand = (player1Id, player2Id, previousHandStacks) => {
       winner: null
     };
 }
-export default createNewHand;
+export default updateGameStateOnHandEnd;
