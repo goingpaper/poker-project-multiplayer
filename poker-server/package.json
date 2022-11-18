@@ -5,7 +5,7 @@
     "type": "module",
     "dependencies": {
         "pokersolver": "^2.1.4",
-        "socket.io": "^4.0.1",
+        "socket.io": "^4.5.3",
         "uuid": "^8.3.2"
     },
     "scripts": {
