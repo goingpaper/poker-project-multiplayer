@@ -1,1 +1,5 @@
-<svg id="eLvWR2Ed61u1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 400" shape-rendering="geometricPrecision" text-rendering="geometricPrecision"><ellipse rx="104.759321" ry="109.558185" transform="matrix(1.909138 0 0 0.912757 199.999983 100.000002)" fill="#04a613" stroke="#000"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid meet">
+  <rect width="800" height="320" fill="#0a1612"/>
+  <ellipse cx="400" cy="160" rx="368" ry="138" fill="#0e4d38" stroke="#163d30" stroke-width="2"/>
+  <ellipse cx="400" cy="160" rx="340" ry="118" fill="none" stroke="#1a5c45" stroke-width="1" opacity="0.6"/>
+</svg>
