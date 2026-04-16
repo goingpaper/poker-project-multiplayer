@@ -1,0 +1,22 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`App > renders poker loading message on play route 1`] = `
+<DocumentFragment>
+  <div
+    class="poker-root"
+  >
+    <div
+      class="poker-wait"
+    >
+      <p>
+        Open another tab here so two players connect.
+      </p>
+      <p
+        class="poker-note"
+      >
+        Connecting…
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;

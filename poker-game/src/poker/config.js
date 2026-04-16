@@ -1,1 +1,0 @@
-export const BIG_BLIND = 10;

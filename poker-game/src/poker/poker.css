@@ -91,6 +91,17 @@
   justify-content: center;
 }
 
+/* PLO: four hole cards in one horizontal row (standard live/online layout). */
+.hand-row--plo {
+  flex-wrap: nowrap;
+  gap: clamp(0.06rem, 0.35vw, 0.18rem);
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  justify-content: center;
+  -webkit-overflow-scrolling: touch;
+}
+
 .board {
   position: relative;
   width: 100%;
@@ -372,6 +383,34 @@
   align-items: center;
   gap: 0.5rem 0.75rem;
   padding-top: 0.25rem;
+}
+
+.poker-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.45rem;
+  width: 100%;
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.poker-preset {
+  padding: 0.3rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background: #1a1a1a;
+  color: #ddd;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.poker-preset:hover {
+  border-color: #888;
+  color: #fff;
+  background: #242424;
 }
 
 .poker-actions label {
