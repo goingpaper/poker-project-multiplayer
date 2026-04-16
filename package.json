@@ -1,0 +1,22 @@
+{
+  "name": "poker-project-multiplayer",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "poker-shared",
+    "poker-server",
+    "poker-game"
+  ],
+  "scripts": {
+    "build": "npm run build -w poker-shared && npm run build -w pokerserver && npm run build -w poker-game",
+    "dev": "npm run build -w poker-shared && concurrently -k -n server,client -c blue,green \"npm run dev -w pokerserver\" \"npm run dev -w poker-game\"",
+    "test": "npm run test -w pokerserver && npm run test -w poker-game",
+    "typecheck": "npm run typecheck -w poker-game",
+    "start": "npm run build && concurrently -k -n server,client -c blue,green \"npm run start -w pokerserver\" \"npm run preview -w poker-game -- --host 127.0.0.1\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

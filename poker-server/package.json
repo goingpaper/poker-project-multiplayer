@@ -4,14 +4,23 @@
   "description": "poker server mvp",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "dependencies": {
+    "poker-shared": "file:../poker-shared",
     "pokersolver": "^2.1.4",
     "socket.io": "^4.8.1"
   },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "build": "tsc",
+    "start": "node scripts/ensure-build.mjs && node dist/server.js",
+    "dev": "tsx watch server.ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.9"
   }
 }
