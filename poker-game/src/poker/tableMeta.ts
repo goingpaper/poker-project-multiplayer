@@ -26,7 +26,12 @@ export function resolveTableMeta(
 }
 
 export function formatTableLabel(meta: TablePublicMeta): string {
-  const v = meta.variant === 'plo_hu' ? 'PLO' : 'NLHE';
+  const v =
+    meta.variant === 'plo_hu'
+      ? 'PLO'
+      : meta.variant === 'plhe_hu_aces'
+        ? 'PLHE · Pocket aces · flop'
+        : 'NLHE';
   const f = meta.format === 'tournament' ? 'Tournament' : 'Cash';
   const blinds = `${meta.betting.smallBlind}/${meta.betting.bigBlind}`;
   const cap = meta.cash?.autoRefill ? ` · top-up ${meta.cash.stackCap}` : '';

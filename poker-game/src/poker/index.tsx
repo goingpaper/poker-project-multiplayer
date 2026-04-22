@@ -298,6 +298,11 @@ function Poker({ roomId }: PokerProps) {
                       D
                     </span>
                   )}
+                  {meta.variant === 'plhe_hu_aces' && hs.acesPlayerId === playerId && (
+                    <span className="poker-aces-badge" title="Pocket aces this hand" aria-label="Pocket aces this hand">
+                      AA
+                    </span>
+                  )}
                   <ChipStack amount={stack} caption={cap} variant="seat" />
                   {isHero ? (
                     <Hand

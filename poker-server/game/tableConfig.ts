@@ -17,8 +17,10 @@ export function tableConfigFromCreateRequest(body: CreateTableRequest): TableRun
   const env = tableConfigFromEnv();
   const variant = body.variant ?? env.variant;
   const format = body.format ?? env.format;
-  const bettingStructure =
-    body.bettingStructure ?? (variant === "plo_hu" ? "pot_limit" : env.bettingStructure);
+  const bettingStructure: TableRuntimeConfig["bettingStructure"] =
+    variant === "plhe_hu_aces"
+      ? "pot_limit"
+      : body.bettingStructure ?? (variant === "plo_hu" ? "pot_limit" : env.bettingStructure);
   const smallBlind = Math.max(1, Math.floor(body.smallBlind ?? env.smallBlind));
   const bigBlind = Math.max(smallBlind + 1, Math.floor(body.bigBlind ?? env.bigBlind));
   const defaultStartingStack = Math.max(
@@ -65,7 +67,7 @@ export function tableConfigFromEnv(): TableRuntimeConfig {
       ? "pot_limit"
       : bettingStructureRaw === "nl" || bettingStructureRaw === "no_limit"
         ? "no_limit"
-        : variant === "plo_hu"
+        : variant === "plo_hu" || variant === "plhe_hu_aces"
           ? "pot_limit"
           : "no_limit";
 

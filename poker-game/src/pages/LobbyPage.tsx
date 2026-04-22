@@ -32,6 +32,9 @@ export default function LobbyPage() {
     if (variant === 'plo_hu' && bettingStructure === 'no_limit') {
       setBettingStructure('pot_limit');
     }
+    if (variant === 'plhe_hu_aces' && bettingStructure !== 'pot_limit') {
+      setBettingStructure('pot_limit');
+    }
   }, [variant, bettingStructure]);
 
   async function createTable(e: FormEvent) {
@@ -89,6 +92,9 @@ export default function LobbyPage() {
           Variant
           <select value={variant} onChange={(ev) => setVariant(ev.target.value as typeof variant)}>
             <option value="nlhe_hu">No-limit Hold&apos;em (HU)</option>
+            <option value="plhe_hu_aces">
+              Hold&apos;em (HU) — pocket aces, flop start, pot limit
+            </option>
             <option value="plo_hu">Pot-limit Omaha (HU)</option>
           </select>
         </label>
@@ -103,6 +109,7 @@ export default function LobbyPage() {
           Betting
           <select
             value={bettingStructure}
+            disabled={variant === 'plhe_hu_aces'}
             onChange={(ev) => setBettingStructure(ev.target.value as typeof bettingStructure)}
           >
             <option value="no_limit">No limit</option>
