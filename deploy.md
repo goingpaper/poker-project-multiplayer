@@ -72,4 +72,4 @@ Rebuild the client whenever the Render URL changes or when you change env-depend
 
 ## 4. Local parity
 
-For local dev, `poker-game/.env.development` can set `VITE_SOCKET_URL=http://127.0.0.1:3001` so the lobby and sockets match your machine.
+In dev, if `VITE_SOCKET_URL` is **not** set, the client uses the **same hostname as the page** on port 3001 (so opening `http://192.168.x.x:3000` on your phone uses `http://192.168.x.x:3001` for Socket.IO and `/api/tables`, not `127.0.0.1` on the phone). Set `VITE_SOCKET_URL` explicitly if you need a fixed backend (e.g. `http://127.0.0.1:3001` for machine-local only). Run the Vite dev server with `--host` (or `server.host: true`) so other devices can load the UI, and allow incoming connections on the poker-server port in the OS firewall if needed.

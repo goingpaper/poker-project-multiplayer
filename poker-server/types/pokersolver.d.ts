@@ -3,6 +3,8 @@ declare module "pokersolver" {
     playerNumber?: number;
     rank: number;
     cards: unknown[];
+    name?: string;
+    descr?: string;
   }
 
   export class Hand {
