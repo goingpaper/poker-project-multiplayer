@@ -41,6 +41,30 @@ function createPlayerHands(deck: string[], cardsPerPlayer: number): [string[], s
   ];
 }
 
+/** Remove and return two random aces from `deck` (standard 52-card strings e.g. `As`, `Ah`). */
+function takeTwoPocketAces(deck: string[]): [string, string] {
+  const aceIndices: number[] = [];
+  for (let i = 0; i < deck.length; i += 1) {
+    if (deck[i]!.startsWith("A")) {
+      aceIndices.push(i);
+    }
+  }
+  if (aceIndices.length < 2) {
+    throw new Error("deck must contain at least two aces");
+  }
+  const j0 = Math.floor(Math.random() * aceIndices.length);
+  const i0 = aceIndices[j0]!;
+  const rest = aceIndices.filter((_, k) => k !== j0);
+  const j1 = Math.floor(Math.random() * rest.length);
+  const i1 = rest[j1]!;
+  const c0 = deck[i0]!;
+  const c1 = deck[i1]!;
+  const [lo, hi] = i0 < i1 ? [i0, i1] : [i1, i0];
+  deck.splice(hi, 1);
+  deck.splice(lo, 1);
+  return [c0, c1];
+}
+
 export interface DealHandOptions {
   variant: PokerVariantId;
   format: GameFormatId;
@@ -51,6 +75,11 @@ export interface DealHandOptions {
   defaultStartingStack: number;
   cash?: { autoRefill: boolean; stackCap: number };
 }
+
+/** For `plhe_hu_aces`: who receives pocket aces this hand (the other player gets a random hand). */
+export type DealHandExtras = {
+  acesHolderId: PlayerId;
+};
 
 /** Public table rules derived from deal options (same object embedded on each `ActiveHandState`). */
 export function dealOptionsToTableMeta(opts: DealHandOptions): TablePublicMeta {
@@ -80,6 +109,7 @@ export default function dealNewHand(
   player2Id: PlayerId,
   previousHandStacks: PlayerStacks | null | undefined,
   opts: DealHandOptions,
+  extras?: DealHandExtras,
 ): HandSnapshot {
   const table = dealOptionsToTableMeta(opts);
 
@@ -113,13 +143,31 @@ export default function dealNewHand(
 
   const holeN = holeCardCountForVariant(opts.variant);
   const currentDeck = createDeck();
-  const playerHands = createPlayerHands(currentDeck, holeN);
-  console.log(playerHands);
+  let idPlayerHands: Record<PlayerId, string[]>;
+  let acesPlayerId: PlayerId | null = null;
 
-  const idPlayerHands: Record<PlayerId, string[]> = {
-    [player1Id]: playerHands[0]!,
-    [player2Id]: playerHands[1]!,
-  };
+  if (opts.variant === "plhe_hu_aces") {
+    if (extras?.acesHolderId == null) {
+      throw new Error("plhe_hu_aces requires extras.acesHolderId");
+    }
+    if (extras.acesHolderId !== player1Id && extras.acesHolderId !== player2Id) {
+      throw new Error("acesHolderId must be one of the two players");
+    }
+    const otherId = extras.acesHolderId === player1Id ? player2Id : player1Id;
+    const pocketAces = takeTwoPocketAces(currentDeck);
+    const otherHole = takeRandomCards(currentDeck, holeN);
+    acesPlayerId = extras.acesHolderId;
+    idPlayerHands = {
+      [extras.acesHolderId]: pocketAces,
+      [otherId]: otherHole,
+    };
+  } else {
+    const playerHands = createPlayerHands(currentDeck, holeN);
+    idPlayerHands = {
+      [player1Id]: playerHands[0]!,
+      [player2Id]: playerHands[1]!,
+    };
+  }
 
   const boardArray = createBoardArray(currentDeck);
 
@@ -137,17 +185,24 @@ export default function dealNewHand(
   playerStacks[playerTurn]! -= opts.smallBlind;
   playerStacks[actSecond]! -= opts.bigBlind;
 
-  const currentTurnBets: PlayerStacks = {
-    [playerTurn]: opts.smallBlind,
-    [actSecond]: opts.bigBlind,
-  };
-
+  const isAcesFlopStart = opts.variant === "plhe_hu_aces";
   const potSize = opts.smallBlind + opts.bigBlind;
+
+  /** Aces (flop) mode: blinds in pot, flop is visible, first street of betting with no chips out yet. */
+  const currentTurnBets: PlayerStacks = isAcesFlopStart
+    ? { [player1Id]: 0, [player2Id]: 0 }
+    : {
+        [playerTurn]: opts.smallBlind,
+        [actSecond]: opts.bigBlind,
+      };
+
+  /** In HU, big blind (non–small blind) acts first on the flop. */
+  const firstActor = isAcesFlopStart ? actSecond : playerTurn;
 
   const out: ActiveHandState = {
     potSize,
-    playerTurn,
-    boardTurn: 0,
+    playerTurn: firstActor,
+    boardTurn: isAcesFlopStart ? 1 : 0,
     board: boardArray,
     playerHands: idPlayerHands,
     playerStacks,
@@ -156,6 +211,7 @@ export default function dealNewHand(
     bigBlindPlayer: actSecond,
     lastRaiser: null,
     winner: null,
+    acesPlayerId: opts.variant === "plhe_hu_aces" ? acesPlayerId : null,
     table,
   };
   return out;

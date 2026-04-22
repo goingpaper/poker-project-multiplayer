@@ -7,7 +7,7 @@ import type {
 } from "poker-shared";
 import { isGameOver } from "poker-shared";
 import { CALL, CHECK, FOLD, RAISE } from "../constants.js";
-import dealNewHand, { type DealHandOptions } from "../util/createhand.js";
+import dealNewHand, { type DealHandExtras, type DealHandOptions } from "../util/createhand.js";
 import resolveShowdownWinners from "../util/showdown.js";
 import type { EngineAction } from "./playerAction.js";
 import { computeCurrentMaxRaiseTo, computeMinRaiseToTotal } from "./betting.js";
@@ -42,6 +42,10 @@ export class HeadsUpGame {
   private state: HandSnapshot | null = null;
   private handHistory: HandHistoryEntry[] = [];
   private handNumberSeq = 0;
+  /** Stable seat order from `startHand` — used for dealing and aces alternation. */
+  private seatOrder: [PlayerId, PlayerId] | null = null;
+  /** Increments each time a new hand is dealt; used to alternate aces for `plhe_hu_aces`. */
+  private acesHandCounter = 0;
 
   constructor(private readonly dealOptions: DealHandOptions) {}
 
@@ -63,9 +67,29 @@ export class HeadsUpGame {
     return entry;
   }
 
+  private stableSeats(): [PlayerId, PlayerId] {
+    if (this.seatOrder == null) {
+      throw new Error("seatOrder unset — startHand was not called");
+    }
+    return this.seatOrder;
+  }
+
+  /** Who gets pocket aces on the *next* deal; advances alternation counter for aces mode. */
+  private consumeAcesExtras(): DealHandExtras | undefined {
+    if (this.dealOptions.variant !== "plhe_hu_aces") {
+      return undefined;
+    }
+    const [a, b] = this.stableSeats();
+    const holder = this.acesHandCounter % 2 === 0 ? a : b;
+    this.acesHandCounter += 1;
+    return { acesHolderId: holder };
+  }
+
   /** Deal the first hand between two players. */
   startHand(player1Id: PlayerId, player2Id: PlayerId): HandSnapshot {
-    this.state = dealNewHand(player1Id, player2Id, null, this.dealOptions);
+    this.seatOrder = [player1Id, player2Id];
+    this.acesHandCounter = 0;
+    this.state = dealNewHand(player1Id, player2Id, null, this.dealOptions, this.consumeAcesExtras());
     this.refreshRaiseCap();
     return this.state;
   }
@@ -177,7 +201,8 @@ export class HeadsUpGame {
         };
         newHistoryEntry = this.pushHandHistory(last);
         hand.playerStacks[opponentId]! += hand.potSize;
-        const next = dealNewHand(playerId, opponentId, hand.playerStacks, this.dealOptions);
+        const [p1, p2] = this.stableSeats();
+        const next = dealNewHand(p1, p2, hand.playerStacks, this.dealOptions, this.consumeAcesExtras());
         if (isGameOver(next)) {
           this.state = next;
         } else {
@@ -194,20 +219,21 @@ export class HeadsUpGame {
       const h = this.state;
       const variant = h.table?.variant ?? "nlhe_hu";
       const potWon = h.potSize;
+      const [sp1, sp2] = this.stableSeats();
       const sdReveal: LastHandResult["reveal"] = {
         board: [...h.board],
         playerHands: { ...h.playerHands },
       };
       const winningPlayerArray = resolveShowdownWinners(
         variant,
-        h.playerHands[playerId]!,
-        h.playerHands[opponentId]!,
+        h.playerHands[sp1]!,
+        h.playerHands[sp2]!,
         h.board,
       );
       let last: LastHandResult;
       if (winningPlayerArray.length === 2) {
-        h.playerStacks[opponentId]! += h.potSize / 2;
-        h.playerStacks[playerId]! += h.potSize / 2;
+        h.playerStacks[sp2]! += h.potSize / 2;
+        h.playerStacks[sp1]! += h.potSize / 2;
         const d0 = solvedHandLabel(winningPlayerArray[0]!);
         const d1 = solvedHandLabel(winningPlayerArray[1]!);
         last = {
@@ -219,7 +245,7 @@ export class HeadsUpGame {
         };
       } else {
         const wh = winningPlayerArray[0]!;
-        const winningPlayer = wh.playerNumber === 1 ? playerId : opponentId;
+        const winningPlayer = wh.playerNumber === 1 ? sp1 : sp2;
         h.playerStacks[winningPlayer]! += h.potSize;
         last = {
           potAmount: potWon,
@@ -230,7 +256,7 @@ export class HeadsUpGame {
         };
       }
       newHistoryEntry = this.pushHandHistory(last);
-      this.state = dealNewHand(playerId, opponentId, h.playerStacks, this.dealOptions);
+      this.state = dealNewHand(sp1, sp2, h.playerStacks, this.dealOptions, this.consumeAcesExtras());
       if (!isGameOver(this.state)) {
         (this.state as ActiveHandState).lastHandResult = last;
       }

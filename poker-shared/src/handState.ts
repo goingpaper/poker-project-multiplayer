@@ -36,6 +36,11 @@ export interface ActiveHandState {
   bigBlindPlayer: PlayerId;
   lastRaiser: PlayerId | null;
   winner: PlayerId | null;
+  /**
+   * `plhe_hu_aces` only: which player was dealt pocket aces this hand (alternates each hand).
+   * Omitted or null for other variants.
+   */
+  acesPlayerId?: PlayerId | null;
   /** Summary of the hand that just finished (new hand is already dealt). */
   lastHandResult?: LastHandResult;
   /** Table rules (variant, format, blinds). Omitted only in legacy snapshots. */
