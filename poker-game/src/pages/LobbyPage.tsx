@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { CreateTableRequest, CreateTableResponse } from 'poker-shared';
 import { socketOrigin } from '../apiBase';
+import { formatVariantName } from '../poker/tableMeta';
 
 export default function LobbyPage() {
   const navigate = useNavigate();
@@ -33,6 +34,9 @@ export default function LobbyPage() {
       setBettingStructure('pot_limit');
     }
     if (variant === 'plhe_hu_aces' && bettingStructure !== 'pot_limit') {
+      setBettingStructure('pot_limit');
+    }
+    if (variant === 'plpog_hu' && bettingStructure === 'no_limit') {
       setBettingStructure('pot_limit');
     }
   }, [variant, bettingStructure]);
@@ -91,11 +95,16 @@ export default function LobbyPage() {
         <label className="lobby__field">
           Variant
           <select value={variant} onChange={(ev) => setVariant(ev.target.value as typeof variant)}>
-            <option value="nlhe_hu">No-limit Hold&apos;em (HU)</option>
-            <option value="plhe_hu_aces">
-              Hold&apos;em (HU) — pocket aces, flop start, pot limit
+            <option value="nlhe_hu">
+              {formatVariantName('nlhe_hu')} (HU)
             </option>
-            <option value="plo_hu">Pot-limit Omaha (HU)</option>
+            <option value="plhe_hu_aces">
+              {formatVariantName('plhe_hu_aces')} (HU)
+            </option>
+            <option value="plpog_hu">
+              {formatVariantName('plpog_hu')} (HU) — 2 cards, +1 on flop, turn, river
+            </option>
+            <option value="plo_hu">{formatVariantName('plo_hu')} (HU)</option>
           </select>
         </label>
         <label className="lobby__field">
@@ -109,7 +118,7 @@ export default function LobbyPage() {
           Betting
           <select
             value={bettingStructure}
-            disabled={variant === 'plhe_hu_aces'}
+            disabled={variant === 'plhe_hu_aces' || variant === 'plpog_hu'}
             onChange={(ev) => setBettingStructure(ev.target.value as typeof bettingStructure)}
           >
             <option value="no_limit">No limit</option>

@@ -8,7 +8,7 @@ export default function resolveShowdownWinners(
   hole2: string[],
   board: string[],
 ) {
-  if (variant === "plo_hu") {
+  if (variant === "plo_hu" || variant === "plpog_hu") {
     return omahaWinners(hole1, hole2, board);
   }
   return getWinnerHoldem(hole1, hole2, board);
