@@ -243,6 +243,11 @@ function Poker({ roomId }: PokerProps) {
     const holeN = holeCardCountForVariant(meta.variant);
 
     const opponentId = getOpponentId(hs);
+    const heroHoleCount = hs.playerHands[socketId]?.length ?? holeN;
+    const oppHoleCount = opponentId != null ? (hs.playerHands[opponentId]?.length ?? holeN) : holeN;
+    const ploLayout =
+      meta.variant === 'plo_hu' || (meta.variant === 'plpog_hu' && Math.max(heroHoleCount, oppHoleCount) >= 4);
+
     if (opponentId == null) {
       return (
         <div className="poker-wait">
@@ -308,14 +313,14 @@ function Poker({ roomId }: PokerProps) {
                     <Hand
                       handArray={hs.playerHands[playerId]!}
                       cardHeight={cardHeightForSeat}
-                      fourCardRow={holeN === 4}
+                      fourCardRow={ploLayout}
                     />
                   ) : (
                     <Hand
                       hidden
-                      cardAmount={holeN}
+                      cardAmount={oppHoleCount}
                       cardHeight={cardHeightForSeat}
-                      fourCardRow={holeN === 4}
+                      fourCardRow={ploLayout}
                     />
                   )}
                   {turn === 4 && hs.playerHands[playerId] != null && !isHero && (
@@ -409,7 +414,8 @@ function Poker({ roomId }: PokerProps) {
     applyPotFraction,
   ]);
 
-  const historyHoleCount = holeCardCountForVariant(resolveTableMeta(handState, serverTable).variant);
+  const tableMetaForHistory = resolveTableMeta(handState, serverTable);
+  const historyHoleCount = holeCardCountForVariant(tableMetaForHistory.variant);
 
   return (
     <div className="poker-root">
@@ -425,12 +431,14 @@ function Poker({ roomId }: PokerProps) {
           result={handResultOverlay}
           viewerId={socketId}
           holeCount={historyHoleCount}
+          tableVariant={tableMetaForHistory.variant}
         />
       )}
       <HandHistoryPanel
         entries={handHistory}
         viewerId={socketId}
         holeCount={historyHoleCount}
+        tableVariant={tableMetaForHistory.variant}
         open={historyOpen}
         onOpenChange={setHistoryOpen}
       />

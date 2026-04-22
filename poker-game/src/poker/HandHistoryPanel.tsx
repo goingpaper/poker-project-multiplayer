@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import type { HandHistoryEntry } from 'poker-shared';
+import type { HandHistoryEntry, PokerVariantId } from 'poker-shared';
 import { seatLabel } from './tableLayouts';
 import HandResultView from './HandResultView';
 
@@ -7,6 +7,7 @@ type HandHistoryPanelProps = {
   entries: readonly HandHistoryEntry[];
   viewerId: string | null;
   holeCount: number;
+  tableVariant: PokerVariantId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -30,6 +31,7 @@ export default function HandHistoryPanel({
   entries,
   viewerId,
   holeCount,
+  tableVariant,
   open,
   onOpenChange,
 }: HandHistoryPanelProps) {
@@ -114,6 +116,7 @@ export default function HandHistoryPanel({
                       result={selected}
                       viewerId={viewerId}
                       holeCount={holeCount}
+                      tableVariant={tableVariant}
                       handNumber={selected.handNumber}
                     />
                   </div>

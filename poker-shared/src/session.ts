@@ -1,5 +1,5 @@
 /** Which poker rules apply (heads-up variants for now; extend with ring games later). */
-export type PokerVariantId = "nlhe_hu" | "plhe_hu_aces" | "plo_hu";
+export type PokerVariantId = "nlhe_hu" | "plhe_hu_aces" | "plpog_hu" | "plo_hu";
 
 /** Cash tables can auto-top-up; tournaments play to elimination with no refill. */
 export type GameFormatId = "cash" | "tournament";
@@ -35,6 +35,8 @@ export function holeCardCountForVariant(variant: PokerVariantId): number {
   switch (variant) {
     case "plo_hu":
       return 4;
+    case "plpog_hu":
+      return 5;
     case "nlhe_hu":
     case "plhe_hu_aces":
     default:

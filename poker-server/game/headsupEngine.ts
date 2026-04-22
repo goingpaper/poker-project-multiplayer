@@ -7,7 +7,11 @@ import type {
 } from "poker-shared";
 import { isGameOver } from "poker-shared";
 import { CALL, CHECK, FOLD, RAISE } from "../constants.js";
-import dealNewHand, { type DealHandExtras, type DealHandOptions } from "../util/createhand.js";
+import dealNewHand, {
+  type DealHandExtras,
+  type DealHandOptions,
+  type DealHandResult,
+} from "../util/createhand.js";
 import resolveShowdownWinners from "../util/showdown.js";
 import type { EngineAction } from "./playerAction.js";
 import { computeCurrentMaxRaiseTo, computeMinRaiseToTotal } from "./betting.js";
@@ -46,6 +50,11 @@ export class HeadsUpGame {
   private seatOrder: [PlayerId, PlayerId] | null = null;
   /** Increments each time a new hand is dealt; used to alternate aces for `plhe_hu_aces`. */
   private acesHandCounter = 0;
+  /**
+   * `plpog_hu`: one extra hole card per player for flop, turn, and river; applied when `boardTurn` advances.
+   * Not part of the wire snapshot for security until dealt.
+   */
+  private pogHoleQueue: Record<PlayerId, [string, string, string]> | null = null;
 
   constructor(private readonly dealOptions: DealHandOptions) {}
 
@@ -74,6 +83,46 @@ export class HeadsUpGame {
     return this.seatOrder;
   }
 
+  private applyDealResult(res: DealHandResult): void {
+    this.state = res.snapshot;
+    if (isGameOver(res.snapshot) || this.dealOptions.variant !== "plpog_hu") {
+      this.pogHoleQueue = null;
+    } else {
+      this.pogHoleQueue = res.pogHoleQueue;
+    }
+  }
+
+  /**
+   * Progressive-Omaha: hole count 2 (preflop) → 3 (flop) → 4 (turn) → 5 (river) as the board is revealed.
+   * Must run after an action that changes `boardTurn` (including a jump to 4 all-in).
+   */
+  private syncPogHolesToBoard(): void {
+    if (this.pogHoleQueue == null || this.dealOptions.variant !== "plpog_hu") {
+      return;
+    }
+    if (this.state == null || isGameOver(this.state)) {
+      return;
+    }
+    const h = this.state;
+    const t =
+      h.boardTurn === 0
+        ? 2
+        : h.boardTurn >= 4
+          ? 5
+          : 2 + h.boardTurn; /* 1→3, 2→4, 3→5 */
+    const [p1, p2] = this.stableSeats();
+    for (const pid of [p1, p2] as [PlayerId, PlayerId]) {
+      const q = this.pogHoleQueue[pid];
+      if (q == null) {
+        return;
+      }
+      while (h.playerHands[pid]!.length < t) {
+        const idx = h.playerHands[pid]!.length - 2;
+        h.playerHands[pid]!.push(q[idx]!);
+      }
+    }
+  }
+
   /** Who gets pocket aces on the *next* deal; advances alternation counter for aces mode. */
   private consumeAcesExtras(): DealHandExtras | undefined {
     if (this.dealOptions.variant !== "plhe_hu_aces") {
@@ -89,9 +138,11 @@ export class HeadsUpGame {
   startHand(player1Id: PlayerId, player2Id: PlayerId): HandSnapshot {
     this.seatOrder = [player1Id, player2Id];
     this.acesHandCounter = 0;
-    this.state = dealNewHand(player1Id, player2Id, null, this.dealOptions, this.consumeAcesExtras());
+    this.applyDealResult(
+      dealNewHand(player1Id, player2Id, null, this.dealOptions, this.consumeAcesExtras()),
+    );
     this.refreshRaiseCap();
-    return this.state;
+    return this.state!;
   }
 
   private refreshRaiseCap(): void {
@@ -203,17 +254,17 @@ export class HeadsUpGame {
         hand.playerStacks[opponentId]! += hand.potSize;
         const [p1, p2] = this.stableSeats();
         const next = dealNewHand(p1, p2, hand.playerStacks, this.dealOptions, this.consumeAcesExtras());
-        if (isGameOver(next)) {
-          this.state = next;
-        } else {
-          (next as ActiveHandState).lastHandResult = last;
-          this.state = next;
+        this.applyDealResult(next);
+        if (!isGameOver(next.snapshot)) {
+          (this.state as ActiveHandState).lastHandResult = last;
         }
         break;
       }
       default:
         return { ok: false, reason: "unknown_action" };
     }
+
+    this.syncPogHolesToBoard();
 
     if (this.state != null && !isGameOver(this.state) && this.state.boardTurn >= 4) {
       const h = this.state;
@@ -256,9 +307,10 @@ export class HeadsUpGame {
         };
       }
       newHistoryEntry = this.pushHandHistory(last);
-      this.state = dealNewHand(sp1, sp2, h.playerStacks, this.dealOptions, this.consumeAcesExtras());
-      if (!isGameOver(this.state)) {
-        (this.state as ActiveHandState).lastHandResult = last;
+      const d = dealNewHand(sp1, sp2, h.playerStacks, this.dealOptions, this.consumeAcesExtras());
+      this.applyDealResult(d);
+      if (!isGameOver(d.snapshot)) {
+        (d.snapshot as ActiveHandState).lastHandResult = last;
       }
     }
 

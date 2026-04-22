@@ -81,6 +81,13 @@ export type DealHandExtras = {
   acesHolderId: PlayerId;
 };
 
+/** Result of `dealNewHand` — POG mode stores the next three hole cards per player (dealt on flop, turn, river). */
+export type DealHandResult = {
+  snapshot: HandSnapshot;
+  /** Server-only; distributed to clients by updating `playerHands` as each street is reached. */
+  pogHoleQueue: Record<PlayerId, [string, string, string]> | null;
+};
+
 /** Public table rules derived from deal options (same object embedded on each `ActiveHandState`). */
 export function dealOptionsToTableMeta(opts: DealHandOptions): TablePublicMeta {
   const base: TablePublicMeta = {
@@ -110,7 +117,7 @@ export default function dealNewHand(
   previousHandStacks: PlayerStacks | null | undefined,
   opts: DealHandOptions,
   extras?: DealHandExtras,
-): HandSnapshot {
+): DealHandResult {
   const table = dealOptionsToTableMeta(opts);
 
   let workingStacks: PlayerStacks | null =
@@ -129,7 +136,7 @@ export default function dealNewHand(
           playerStacks: workingStacks,
           gameWinner: p1b ? player2Id : player1Id,
         };
-        return out;
+        return { snapshot: out, pogHoleQueue: null };
       }
     }
   }
@@ -141,10 +148,10 @@ export default function dealNewHand(
     actSecond = player1Id;
   }
 
-  const holeN = holeCardCountForVariant(opts.variant);
   const currentDeck = createDeck();
   let idPlayerHands: Record<PlayerId, string[]>;
   let acesPlayerId: PlayerId | null = null;
+  let pogHoleQueue: Record<PlayerId, [string, string, string]> | null = null;
 
   if (opts.variant === "plhe_hu_aces") {
     if (extras?.acesHolderId == null) {
@@ -154,6 +161,7 @@ export default function dealNewHand(
       throw new Error("acesHolderId must be one of the two players");
     }
     const otherId = extras.acesHolderId === player1Id ? player2Id : player1Id;
+    const holeN = holeCardCountForVariant(opts.variant);
     const pocketAces = takeTwoPocketAces(currentDeck);
     const otherHole = takeRandomCards(currentDeck, holeN);
     acesPlayerId = extras.acesHolderId;
@@ -161,7 +169,14 @@ export default function dealNewHand(
       [extras.acesHolderId]: pocketAces,
       [otherId]: otherHole,
     };
+  } else if (opts.variant === "plpog_hu") {
+    const ph = createPlayerHands(currentDeck, 2);
+    idPlayerHands = {
+      [player1Id]: ph[0]!,
+      [player2Id]: ph[1]!,
+    };
   } else {
+    const holeN = holeCardCountForVariant(opts.variant);
     const playerHands = createPlayerHands(currentDeck, holeN);
     idPlayerHands = {
       [player1Id]: playerHands[0]!,
@@ -170,6 +185,12 @@ export default function dealNewHand(
   }
 
   const boardArray = createBoardArray(currentDeck);
+
+  if (opts.variant === "plpog_hu") {
+    const a3 = takeRandomCards(currentDeck, 3) as [string, string, string];
+    const b3 = takeRandomCards(currentDeck, 3) as [string, string, string];
+    pogHoleQueue = { [player1Id]: a3, [player2Id]: b3 };
+  }
 
   const playerStacks: PlayerStacks =
     workingStacks != null
@@ -214,5 +235,5 @@ export default function dealNewHand(
     acesPlayerId: opts.variant === "plhe_hu_aces" ? acesPlayerId : null,
     table,
   };
-  return out;
+  return { snapshot: out, pogHoleQueue: opts.variant === "plpog_hu" ? pogHoleQueue : null };
 }

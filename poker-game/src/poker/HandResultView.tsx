@@ -1,12 +1,23 @@
-import type { LastHandResult } from 'poker-shared';
+import type { LastHandResult, PokerVariantId } from 'poker-shared';
 import Card from 'react-free-playing-cards';
 import Hand from './hand';
 import { rotateSeatsForViewer, seatLabel } from './tableLayouts';
 
+/** POG: community cards in play match hole count (0 at preflop, then 3/4/5). */
+function pogBoardSliceLength(maxHoleCount: number): number {
+  if (maxHoleCount <= 2) {
+    return 0;
+  }
+  return maxHoleCount;
+}
+
 export type HandResultViewProps = {
   result: LastHandResult;
   viewerId: string;
+  /** Table max (e.g. 5 for POG); layout also uses per-hand data when `tableVariant` is POG. */
   holeCount: number;
+  /** When `plpog_hu`, only community cards that had been dealt at hand end are shown. */
+  tableVariant?: PokerVariantId;
   handNumber?: number;
 };
 
@@ -17,10 +28,15 @@ function labelPlayer(playerId: string, viewerId: string): string {
 /**
  * Card recap (used by the post-hand overlay and the hand history panel).
  */
-function HandResultView({ result, viewerId, holeCount, handNumber }: HandResultViewProps) {
+function HandResultView({ result, viewerId, holeCount, tableVariant, handNumber }: HandResultViewProps) {
   const { potAmount, description, split, winnerId, reveal } = result;
   const seatIds = rotateSeatsForViewer(Object.keys(reveal.playerHands).sort(), viewerId);
-  const fourCard = holeCount === 4;
+  const maxHoleLen = Math.max(0, ...Object.values(reveal.playerHands).map((h) => h.length));
+  const isPog = tableVariant === 'plpog_hu';
+  const boardCardsToShow = isPog
+    ? reveal.board.slice(0, pogBoardSliceLength(maxHoleLen))
+    : reveal.board;
+  const fourCard = tableVariant === 'plo_hu' ? holeCount === 4 : isPog ? maxHoleLen >= 4 : holeCount === 4;
   const cardH = 'clamp(56px, 7vw, 88px)';
 
   const headline = split
@@ -37,7 +53,7 @@ function HandResultView({ result, viewerId, holeCount, handNumber }: HandResultV
       <p className="poker-hand-result__desc">{description}</p>
 
       <div className="poker-hand-result__board">
-        {reveal.board.map((c, i) => (
+        {boardCardsToShow.map((c, i) => (
           <Card key={`${c}-${i}`} card={c} deckType="FcN" height={cardH} />
         ))}
       </div>
