@@ -13,12 +13,21 @@ import {
   seatLabel,
   sortedSeatIds,
 } from './tableLayouts';
-import type { ActiveHandState, HandSnapshot, TableConfigPayload } from 'poker-shared';
+import type {
+  ActiveHandState,
+  HandHistoryEntry,
+  HandSnapshot,
+  LastHandResult,
+  TableConfigPayload,
+} from 'poker-shared';
 import { holeCardCountForVariant, isGameOver } from 'poker-shared';
 import { formatTableLabel, resolveTableMeta } from './tableMeta';
+import { socketOrigin } from '../apiBase';
+import HandResultOverlay from './HandResultOverlay';
+import HandHistoryPanel from './HandHistoryPanel';
 import './poker.css';
 
-const defaultSocketUrl = 'http://127.0.0.1:3001';
+const HAND_RESULT_MS = 2800;
 
 type PokerProps = {
   /** Must match a server room (`default` exists; API-created games use the returned id). */
@@ -32,6 +41,9 @@ function Poker({ roomId }: PokerProps) {
   const [socketId, setSocketId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [serverTable, setServerTable] = useState<TableConfigPayload | null>(null);
+  const [handResultOverlay, setHandResultOverlay] = useState<LastHandResult | null>(null);
+  const [handHistory, setHandHistory] = useState<HandHistoryEntry[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const calculateMinRaiseSize = useCallback(
     (
@@ -53,7 +65,8 @@ function Poker({ roomId }: PokerProps) {
   }, [socketId]);
 
   useEffect(() => {
-    const url = import.meta.env.VITE_SOCKET_URL || defaultSocketUrl;
+    setHandHistory([]);
+    const url = socketOrigin();
     const ws = io(url, {
       query: { room: roomId },
       reconnectionDelayMax: 10000,
@@ -85,6 +98,30 @@ function Poker({ roomId }: PokerProps) {
       setStarted(true);
     });
 
+    ws.on('handHistory', (raw: string) => {
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        setHandHistory(Array.isArray(parsed) ? (parsed as HandHistoryEntry[]) : []);
+      } catch {
+        setHandHistory([]);
+      }
+    });
+
+    ws.on('handHistoryAppend', (raw: string) => {
+      try {
+        const e = JSON.parse(raw) as HandHistoryEntry;
+        if (e?.handNumber == null) return;
+        setHandHistory((prev) => {
+          if (prev.some((p) => p.handNumber === e.handNumber)) {
+            return prev;
+          }
+          return [...prev, e].slice(-50);
+        });
+      } catch {
+        /* ignore */
+      }
+    });
+
     setSocket(ws);
 
     return () => {
@@ -105,6 +142,17 @@ function Poker({ roomId }: PokerProps) {
       ),
     );
   }, [handState, socketId, calculateMinRaiseSize, serverTable]);
+
+  useEffect(() => {
+    if (handState == null || isGameOver(handState) || !handState.lastHandResult) {
+      setHandResultOverlay(null);
+      return;
+    }
+    const r = handState.lastHandResult;
+    setHandResultOverlay(r);
+    const t = window.setTimeout(() => setHandResultOverlay(null), HAND_RESULT_MS);
+    return () => clearTimeout(t);
+  }, [handState]);
 
   const handleChangeBetSize = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -356,7 +404,34 @@ function Poker({ roomId }: PokerProps) {
     applyPotFraction,
   ]);
 
-  return <div className="poker-root">{table}</div>;
+  const historyHoleCount = holeCardCountForVariant(resolveTableMeta(handState, serverTable).variant);
+
+  return (
+    <div className="poker-root">
+      {socketId != null && (
+        <div className="poker-toolbar">
+          <button type="button" className="poker-toolbar__btn" onClick={() => setHistoryOpen(true)}>
+            Hand history{handHistory.length > 0 ? ` (${handHistory.length})` : ''}
+          </button>
+        </div>
+      )}
+      {handResultOverlay != null && socketId != null && handState != null && !isGameOver(handState) && (
+        <HandResultOverlay
+          result={handResultOverlay}
+          viewerId={socketId}
+          holeCount={historyHoleCount}
+        />
+      )}
+      <HandHistoryPanel
+        entries={handHistory}
+        viewerId={socketId}
+        holeCount={historyHoleCount}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+      />
+      {table}
+    </div>
+  );
 }
 
 export default Poker;

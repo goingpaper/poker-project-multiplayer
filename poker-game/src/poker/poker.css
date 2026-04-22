@@ -10,6 +10,29 @@
   text-align: left;
 }
 
+.poker-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.poker-toolbar__btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #4a5a52;
+  border-radius: 4px;
+  background: #152018;
+  color: #b8d4c4;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.poker-toolbar__btn:hover {
+  border-color: #6a8a78;
+  color: #e4f0ea;
+  background: #1a2a22;
+}
+
 .poker-shell {
   display: flex;
   flex-direction: column;
@@ -447,4 +470,229 @@
   margin: 0;
   font-size: 0.8125rem;
   color: #666;
+}
+
+/* ——— post-hand result ——— */
+.poker-hand-result {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+  pointer-events: auto;
+}
+
+.poker-hand-result__panel {
+  max-width: min(520px, 92vw);
+  padding: 1.25rem 1.35rem 1.4rem;
+  border-radius: 10px;
+  background: linear-gradient(165deg, #1e2a24 0%, #121816 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  text-align: center;
+}
+
+.poker-hand-result__num {
+  margin: 0 0 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5a6a62;
+}
+
+.poker-hand-result__headline {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e8f0ec;
+  letter-spacing: 0.02em;
+}
+
+.poker-hand-result__pot {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #7fd6a0;
+  font-variant-numeric: tabular-nums;
+}
+
+.poker-hand-result__desc {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: #9aa8a0;
+}
+
+.poker-hand-result__board {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.poker-hand-result__holes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.poker-hand-result__hole-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.poker-hand-result__hole-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6a7a72;
+}
+
+/* ——— hand history modal ——— */
+.poker-hand-history__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.poker-hand-history__dialog {
+  width: min(900px, 100%);
+  max-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  background: #121a16;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.poker-hand-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0d140f;
+}
+
+.poker-hand-history__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e0ebe4;
+}
+
+.poker-hand-history__close {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #8a9a90;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.poker-hand-history__close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.poker-hand-history__empty {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #6a7a72;
+  font-size: 0.875rem;
+}
+
+.poker-hand-history__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  .poker-hand-history__body {
+    grid-template-columns: 1fr;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+.poker-hand-history__list {
+  margin: 0;
+  padding: 0.5rem 0;
+  list-style: none;
+  max-height: min(72vh, 720px);
+  overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 700px) {
+  .poker-hand-history__list {
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+.poker-hand-history__row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.9rem;
+  border: none;
+  background: transparent;
+  color: #b0c4b8;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.poker-hand-history__row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2eee6;
+}
+
+.poker-hand-history__row--active {
+  background: rgba(90, 140, 100, 0.12);
+  color: #dff5e4;
+  border-left-color: #5a8c6a;
+}
+
+.poker-hand-history__detail {
+  padding: 0.75rem 0.5rem 1rem;
+  overflow-y: auto;
+  max-height: min(72vh, 720px);
+}
+
+.poker-hand-history__detail .poker-hand-result__panel {
+  border: none;
+  background: #151f19;
+  box-shadow: none;
+  margin: 0;
 }

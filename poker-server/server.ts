@@ -68,6 +68,9 @@ function attachSocketHandlers(socket: Socket, roomId: string): void {
       return;
     }
     io.to(roomId).emit("receiveHandState", JSON.stringify(result.snapshot));
+    if (result.handHistoryEntry) {
+      io.to(roomId).emit("handHistoryAppend", JSON.stringify(result.handHistoryEntry));
+    }
   });
 }
 
@@ -96,13 +99,18 @@ io.on("connection", (socket) => {
 
   socket.emit("tableConfig", tableConfigPayload(room.config));
   socket.emit("playerConnected", socket.id);
+  socket.emit("handHistory", JSON.stringify([...room.game.getHandHistory()]));
 
   socket.on("disconnect", () => {
     const rid = getRoomIdForSocket(socket.id);
     leaveRoom(socket.id);
     if (rid !== undefined) {
       resetRoomGameIfShortHanded(rid);
+      const room = getRoom(rid);
       io.to(rid).emit("playerleft");
+      if (room != null) {
+        io.to(rid).emit("handHistory", JSON.stringify([...room.game.getHandHistory()]));
+      }
     }
   });
 
