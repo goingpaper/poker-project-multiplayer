@@ -154,6 +154,31 @@ function Poker({ roomId }: PokerProps) {
     return () => clearTimeout(t);
   }, [handState]);
 
+  const opponentBannerText = useMemo(() => {
+    if (handState == null || socketId == null || isGameOver(handState)) return null;
+    const opp = getOpponentId(handState);
+    if (opp == null) return null;
+
+    const ah = handState as ActiveHandState;
+    const la = ah.lastAction;
+    if (la?.playerId === opp) {
+      if (la.kind === 'check') return 'Opponent checked';
+      if (la.kind === 'call') {
+        return la.streetTotal != null ? `Opponent called to ${la.streetTotal}` : 'Opponent called';
+      }
+      if (la.kind === 'raise' && la.streetTotal != null) {
+        return `Opponent raised to ${la.streetTotal}`;
+      }
+    }
+
+    const lhr = ah.lastHandResult;
+    if (lhr?.winnerId === socketId && /fold/i.test(lhr.description ?? '')) {
+      return 'Opponent folded';
+    }
+
+    return null;
+  }, [handState, socketId, getOpponentId]);
+
   const handleChangeBetSize = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const valueRaw = event.target.value;
@@ -274,13 +299,18 @@ function Poker({ roomId }: PokerProps) {
     const positions = getSeatPositions(seatCount);
 
     const cardHeightForSeat = seatCount <= 4
-      ? 'clamp(108px, 12.5vw, 168px)'
-      : 'clamp(84px, 9.8vw, 132px)';
+      ? 'clamp(102px, 11.8vw, 156px)'
+      : 'clamp(80px, 9.2vw, 124px)';
 
     return (
       <div className="poker-shell">
         {!started && <p className="poker-note">Waiting for second player.</p>}
         <p className="poker-note poker-note--meta">{formatTableLabel(meta)}</p>
+        {opponentBannerText != null && (
+          <div className="poker-opponent-action" role="status" aria-live="polite">
+            {opponentBannerText}
+          </div>
+        )}
 
         <div className={`poker-table-ring poker-table-ring--players-${seatCount}`}>
           {seatIds.map((playerId, slot) => {
@@ -309,20 +339,34 @@ function Poker({ roomId }: PokerProps) {
                     </span>
                   )}
                   <ChipStack amount={stack} caption={cap} variant="seat" />
-                  {isHero ? (
-                    <Hand
-                      handArray={hs.playerHands[playerId]!}
-                      cardHeight={cardHeightForSeat}
-                      fourCardRow={ploLayout}
-                    />
-                  ) : (
-                    <Hand
-                      hidden
-                      cardAmount={oppHoleCount}
-                      cardHeight={cardHeightForSeat}
-                      fourCardRow={ploLayout}
-                    />
-                  )}
+                  <div className="poker-seat__hole-row">
+                    {isHero ? (
+                      <Hand
+                        handArray={hs.playerHands[playerId]!}
+                        cardHeight={cardHeightForSeat}
+                        fourCardRow={ploLayout}
+                      />
+                    ) : (
+                      <Hand
+                        hidden
+                        cardAmount={oppHoleCount}
+                        cardHeight={cardHeightForSeat}
+                        fourCardRow={ploLayout}
+                      />
+                    )}
+                    <div
+                      className={`poker-seat__street-bet${
+                        (hs.currentTurnBets[playerId] ?? 0) === 0 ? ' poker-seat__street-bet--empty' : ''
+                      }`}
+                    >
+                      <ChipStack
+                        amount={hs.currentTurnBets[playerId] ?? 0}
+                        caption={isHero ? 'Your bet' : seatCount === 2 ? 'Opponent bet' : `${cap} · bet`}
+                        variant="felt"
+                        showAmount
+                      />
+                    </div>
+                  </div>
                   {turn === 4 && hs.playerHands[playerId] != null && !isHero && (
                     <div className="poker-note">{hs.playerHands[playerId]!.join(' ')}</div>
                   )}
@@ -332,18 +376,11 @@ function Poker({ roomId }: PokerProps) {
           })}
 
           <div className="poker-table-center">
-            <Board
-              boardArray={hs.board}
-              turn={hs.boardTurn}
-              seatCount={seatCount}
-              seatIds={seatIds}
-              currentTurnBets={hs.currentTurnBets}
-              viewerId={socketId}
-            />
+            <Board boardArray={hs.board} turn={hs.boardTurn} potSize={hs.potSize} seatCount={seatCount} />
           </div>
         </div>
 
-        {isPlayerTurn ? (
+        <div className="poker-actions-dock">
           <div className="poker-actions">
             <label htmlFor="raise-amount">Raise to</label>
             <input
@@ -353,48 +390,48 @@ function Poker({ roomId }: PokerProps) {
               min={minRaise}
               max={Math.floor(maxRaiseTo)}
               onChange={handleChangeBetSize}
+              disabled={!isPlayerTurn}
             />
-            {isRaiseAllowed && (
-              <div className="poker-presets" role="group" aria-label="Bet size as fraction of pot">
-                <button type="button" className="poker-preset" onClick={() => applyPotFraction(0.25)}>
-                  25%
+            <div className="poker-presets" role="group" aria-label="Bet size as fraction of pot">
+              {[0.25, 0.5, 0.75, 1, 1.5].map((fraction) => (
+                <button
+                  key={fraction}
+                  type="button"
+                  className="poker-preset"
+                  disabled={!isPlayerTurn || !isRaiseAllowed}
+                  onClick={() => applyPotFraction(fraction)}
+                >
+                  {fraction === 1 ? 'Pot' : `${fraction * 100}%`}
                 </button>
-                <button type="button" className="poker-preset" onClick={() => applyPotFraction(0.5)}>
-                  50%
+              ))}
+            </div>
+            <div className="poker-actions__buttons">
+              <button type="button" onClick={fold} disabled={!isPlayerTurn}>
+                Fold
+              </button>
+              {isCheckAllowed && (
+                <button type="button" onClick={check} disabled={!isPlayerTurn}>
+                  Check
                 </button>
-                <button type="button" className="poker-preset" onClick={() => applyPotFraction(0.75)}>
-                  75%
+              )}
+              {isCallAllowed && (
+                <button type="button" onClick={call} disabled={!isPlayerTurn}>
+                  Call {callTarget}
                 </button>
-                <button type="button" className="poker-preset" onClick={() => applyPotFraction(1)}>
-                  Pot
+              )}
+              {isRaiseAllowed && (
+                <button type="button" onClick={raise} disabled={!isPlayerTurn}>
+                  Raise
                 </button>
-                <button type="button" className="poker-preset" onClick={() => applyPotFraction(1.5)}>
-                  150%
-                </button>
+              )}
+            </div>
+            {!isPlayerTurn && (
+              <div className="poker-actions__wait-overlay" role="status" aria-live="polite">
+                <span>Waiting for another player.</span>
               </div>
             )}
-            <button type="button" onClick={fold}>
-              Fold
-            </button>
-            {isCheckAllowed && (
-              <button type="button" onClick={check}>
-                Check
-              </button>
-            )}
-            {isCallAllowed && (
-              <button type="button" onClick={call}>
-                Call {callTarget}
-              </button>
-            )}
-            {isRaiseAllowed && (
-              <button type="button" onClick={raise}>
-                Raise
-              </button>
-            )}
           </div>
-        ) : (
-          <p className="poker-hint">Waiting for another player.</p>
-        )}
+        </div>
       </div>
     );
   }, [

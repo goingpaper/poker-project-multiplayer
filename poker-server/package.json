@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "dependencies": {
-    "poker-shared": "file:../poker-shared",
+    "poker-shared": "workspace:*",
     "pokersolver": "^2.1.4",
     "socket.io": "^4.8.1"
   },

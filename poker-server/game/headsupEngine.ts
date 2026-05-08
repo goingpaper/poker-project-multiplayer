@@ -3,6 +3,7 @@ import type {
   HandHistoryEntry,
   HandSnapshot,
   LastHandResult,
+  LastPlayerAction,
   PlayerId,
 } from "poker-shared";
 import { isGameOver } from "poker-shared";
@@ -176,6 +177,14 @@ export class HeadsUpGame {
       delete (hand as { lastHandResult?: LastHandResult }).lastHandResult;
     }
 
+    const clearStreetBanner = (h: ActiveHandState): void => {
+      delete h.lastAction;
+    };
+
+    const setActorBanner = (h: ActiveHandState, actor: PlayerId, a: LastPlayerAction): void => {
+      h.lastAction = a;
+    };
+
     const playerId = actorId;
 
     let newHistoryEntry: HandHistoryEntry | undefined;
@@ -188,11 +197,18 @@ export class HeadsUpGame {
           hand.playerStacks[playerId]! < callDifference
             ? hand.playerStacks[playerId]!
             : callDifference;
+        const endsStreet = hand.lastRaiser != null;
+
         hand.playerStacks[playerId]! -= callAmount;
         hand.potSize += callAmount;
         hand.currentTurnBets[playerId]! += callAmount;
-        if (hand.lastRaiser == null) {
+        if (!endsStreet) {
           hand.playerTurn = opponentId;
+          setActorBanner(hand, playerId, {
+            playerId,
+            kind: "call",
+            streetTotal: hand.currentTurnBets[playerId]!,
+          });
         } else {
           hand.playerTurn = hand.bigBlindPlayer;
           hand.boardTurn += 1;
@@ -201,6 +217,7 @@ export class HeadsUpGame {
             [opponentId]: 0,
           };
           hand.lastRaiser = null;
+          clearStreetBanner(hand);
         }
         if (hand.playerStacks[playerId] === 0 || hand.playerStacks[opponentId] === 0) {
           hand.boardTurn = 4;
@@ -215,11 +232,14 @@ export class HeadsUpGame {
             [playerId]: 0,
             [opponentId]: 0,
           };
+          clearStreetBanner(hand);
         } else if (hand.bigBlindPlayer === playerId) {
           hand.playerTurn = opponentId;
+          setActorBanner(hand, playerId, { playerId, kind: "check" });
         } else {
           hand.playerTurn = hand.bigBlindPlayer;
           hand.boardTurn += 1;
+          clearStreetBanner(hand);
         }
         break;
       }
@@ -235,6 +255,11 @@ export class HeadsUpGame {
         hand.playerTurn = opponentId;
         hand.potSize += raiseSize;
         hand.lastRaiser = playerId;
+        setActorBanner(hand, playerId, {
+          playerId,
+          kind: "raise",
+          streetTotal: action.betSize,
+        });
         break;
       }
       case FOLD: {
