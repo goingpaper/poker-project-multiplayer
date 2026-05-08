@@ -53,7 +53,7 @@ function Poker({ roomId }: PokerProps) {
       bigBlind: number,
     ) => {
       if (lastRaiser == null) {
-        return 2 * bigBlind;
+        return opponentCurrentBet === playerCurrentBet ? playerCurrentBet + bigBlind : 2 * bigBlind;
       }
       return 2 * opponentCurrentBet - playerCurrentBet;
     },
@@ -243,10 +243,8 @@ function Poker({ roomId }: PokerProps) {
     const holeN = holeCardCountForVariant(meta.variant);
 
     const opponentId = getOpponentId(hs);
-    const heroHoleCount = hs.playerHands[socketId]?.length ?? holeN;
     const oppHoleCount = opponentId != null ? (hs.playerHands[opponentId]?.length ?? holeN) : holeN;
-    const ploLayout =
-      meta.variant === 'plo_hu' || (meta.variant === 'plpog_hu' && Math.max(heroHoleCount, oppHoleCount) >= 4);
+    const ploLayout = meta.variant === 'plo_hu' || meta.variant === 'plpog_hu';
 
     if (opponentId == null) {
       return (
@@ -259,6 +257,7 @@ function Poker({ roomId }: PokerProps) {
     const isPlayerTurn = socketId === hs.playerTurn;
     const isCheckAllowed = hs.currentTurnBets[socketId] === hs.currentTurnBets[opponentId];
     const isCallAllowed = hs.currentTurnBets[socketId]! < hs.currentTurnBets[opponentId]!;
+    const callTarget = hs.currentTurnBets[opponentId]!;
     const maxRaiseTo =
       hs.currentMaxRaiseTo ?? hs.currentTurnBets[socketId]! + hs.playerStacks[socketId]!;
     const minRaise = calculateMinRaiseSize(
@@ -274,8 +273,9 @@ function Poker({ roomId }: PokerProps) {
     const seatCount = seatIds.length;
     const positions = getSeatPositions(seatCount);
 
-    const cardHeightForSeat =
-      seatCount <= 4 ? 'clamp(72px, 9vw, 108px)' : 'clamp(52px, 6vw, 88px)';
+    const cardHeightForSeat = seatCount <= 4
+      ? 'clamp(108px, 12.5vw, 168px)'
+      : 'clamp(84px, 9.8vw, 132px)';
 
     return (
       <div className="poker-shell">
@@ -335,7 +335,6 @@ function Poker({ roomId }: PokerProps) {
             <Board
               boardArray={hs.board}
               turn={hs.boardTurn}
-              potSize={hs.potSize}
               seatCount={seatCount}
               seatIds={seatIds}
               currentTurnBets={hs.currentTurnBets}
@@ -384,7 +383,7 @@ function Poker({ roomId }: PokerProps) {
             )}
             {isCallAllowed && (
               <button type="button" onClick={call}>
-                Call
+                Call {callTarget}
               </button>
             )}
             {isRaiseAllowed && (

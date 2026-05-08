@@ -7,7 +7,6 @@ import { getBetOnFeltPositions, seatAnchorStyle, seatLabel } from './tableLayout
 type BoardProps = {
   boardArray: string[];
   turn: number;
-  potSize: number;
   seatCount?: number;
   seatIds?: string[];
   currentTurnBets?: Record<string, number>;
@@ -17,7 +16,6 @@ type BoardProps = {
 function Board({
   boardArray,
   turn,
-  potSize,
   seatCount = 2,
   seatIds = [],
   currentTurnBets = {},
@@ -66,9 +64,6 @@ function Board({
 
       <div className="board__community board__community--solo">
         <div className="board__center-stack">
-          <div className="board__pot-mid">
-            <ChipStack amount={potSize} caption="Pot" variant="felt" showAmount />
-          </div>
           {boardCards != null ? (
             <div className="board__cards-wrap">{boardCards}</div>
           ) : (

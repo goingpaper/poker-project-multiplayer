@@ -8,6 +8,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,6 +19,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepack": "npm run build",
     "prepare": "npm run build"
   },
   "devDependencies": {

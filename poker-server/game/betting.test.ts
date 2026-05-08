@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { ActiveHandState } from "poker-shared";
-import { computeCurrentMaxRaiseTo } from "./betting.js";
+import { computeCurrentMaxRaiseTo, computeMinRaiseToTotal } from "./betting.js";
 
 describe("computeCurrentMaxRaiseTo pot-limit", () => {
   it("matches SB preflop: my+pot+facing (reference: pot + amount to call)", () => {
@@ -67,5 +67,28 @@ describe("computeCurrentMaxRaiseTo pot-limit", () => {
       },
     };
     expect(computeCurrentMaxRaiseTo(h, "p1", "p2")).toBe(40);
+  });
+
+  it("allows flop-start opening bet in aces mode (min one big blind)", () => {
+    const h: ActiveHandState = {
+      potSize: 15,
+      playerTurn: "p2",
+      boardTurn: 1,
+      board: [],
+      playerHands: { p1: [], p2: [] },
+      playerStacks: { p1: 995, p2: 990 },
+      currentTurnBets: { p1: 0, p2: 0 },
+      buttonPlayer: "p1",
+      bigBlindPlayer: "p2",
+      lastRaiser: null,
+      winner: null,
+      table: {
+        variant: "plhe_hu_aces",
+        format: "cash",
+        betting: { structure: "pot_limit", smallBlind: 5, bigBlind: 10 },
+      },
+    };
+    expect(computeMinRaiseToTotal(h, "p1", "p2")).toBe(10);
+    expect(computeCurrentMaxRaiseTo(h, "p2", "p1")).toBe(15);
   });
 });

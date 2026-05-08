@@ -34,7 +34,10 @@ export function computeMinRaiseToTotal(h: ActiveHandState, opponentId: string, p
   const opp = h.currentTurnBets[opponentId]!;
   const my = h.currentTurnBets[playerId]!;
   if (h.lastRaiser == null) {
-    return 2 * bb;
+    // No prior aggressor this street:
+    // - facing no bet (e.g. flop start): minimum open is one big blind
+    // - facing posted blind preflop: minimum raise-to remains 2x big blind
+    return opp === my ? my + bb : 2 * bb;
   }
   return 2 * opp - my;
 }

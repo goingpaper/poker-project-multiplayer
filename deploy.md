@@ -18,8 +18,8 @@ Deploy the **server first**, copy its `https://…` URL, then set **`VITE_SOCKET
 
    | Field | Value |
    |--------|--------|
-   | **Build command** | `npm ci && npm run build -w poker-shared && npm run build -w pokerserver` |
-   | **Start command** | `npm run start -w pokerserver` |
+   | **Build command** | `yarn install --immutable && yarn workspace poker-shared build && yarn workspace pokerserver build` |
+   | **Start command** | `yarn workspace pokerserver start` |
 
 4. **Environment** (optional but useful):
 
@@ -44,8 +44,8 @@ Any static host with Git integration works (Netlify, Vercel, etc.). Below is a *
 
    | Field | Value |
    |--------|--------|
-   | **Root directory** | `/` (repo root) |
-   | **Build command** | `npm ci && npm run build -w poker-shared && npm run build -w poker-game` |
+   | **Root directory** | `.` (repo root) |
+   | **Build command** | `yarn install --immutable && yarn workspace poker-shared build && yarn workspace poker-game build` |
    | **Build output directory** | `poker-game/dist` |
 
 3. **Environment variables** (Production — and Preview if you want PR previews to hit a real API):
