@@ -36,7 +36,7 @@ function HandResultView({ result, viewerId, holeCount, tableVariant, handNumber 
   const boardCardsToShow = isPog
     ? reveal.board.slice(0, pogBoardSliceLength(maxHoleLen))
     : reveal.board;
-  const fourCard = tableVariant === 'plo_hu' ? holeCount === 4 : isPog ? maxHoleLen >= 4 : holeCount === 4;
+  const fourCard = tableVariant === 'plo_hu' ? holeCount === 4 : isPog ? true : holeCount === 4;
   const cardH = 'clamp(56px, 7vw, 88px)';
 
   const headline = split
