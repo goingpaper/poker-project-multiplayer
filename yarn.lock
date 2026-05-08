@@ -2363,7 +2363,7 @@ __metadata:
     "@types/react-router-dom": "npm:^5.3.3"
     "@vitejs/plugin-react": "npm:^4.3.4"
     jsdom: "npm:^24.1.3"
-    poker-shared: "file:../poker-shared"
+    poker-shared: "workspace:*"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-free-playing-cards: "npm:^0.4.2"
@@ -2384,21 +2384,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"poker-shared@file:../poker-shared::locator=poker-game%40workspace%3Apoker-game":
-  version: 0.0.1
-  resolution: "poker-shared@file:../poker-shared#../poker-shared::hash=4b660e&locator=poker-game%40workspace%3Apoker-game"
-  checksum: 10c0/3ed5ab5c2a47d9204c682eae329f50799f92db0feae95dad48653b410f14f32d685a4c008be457db86635e7e84c71e7206a2369985927f27b26e0ee1f54b3b06
-  languageName: node
-  linkType: hard
-
-"poker-shared@file:../poker-shared::locator=pokerserver%40workspace%3Apoker-server":
-  version: 0.0.1
-  resolution: "poker-shared@file:../poker-shared#../poker-shared::hash=4b660e&locator=pokerserver%40workspace%3Apoker-server"
-  checksum: 10c0/3ed5ab5c2a47d9204c682eae329f50799f92db0feae95dad48653b410f14f32d685a4c008be457db86635e7e84c71e7206a2369985927f27b26e0ee1f54b3b06
-  languageName: node
-  linkType: hard
-
-"poker-shared@workspace:poker-shared":
+"poker-shared@workspace:*, poker-shared@workspace:poker-shared":
   version: 0.0.0-use.local
   resolution: "poker-shared@workspace:poker-shared"
   dependencies:
@@ -2411,7 +2397,7 @@ __metadata:
   resolution: "pokerserver@workspace:poker-server"
   dependencies:
     "@types/node": "npm:^24.0.0"
-    poker-shared: "file:../poker-shared"
+    poker-shared: "workspace:*"
     pokersolver: "npm:^2.1.4"
     socket.io: "npm:^4.8.1"
     tsx: "npm:^4.19.3"
