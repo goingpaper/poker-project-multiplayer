@@ -8,7 +8,7 @@ Deploy the **server first**, copy its `https://…` URL, then set **`VITE_SOCKET
 
 **Node:** The repo expects **Node ≥ 24** (`engines` in root and packages). Set **`NODE_VERSION=24`** (or equivalent) on each host if builds fail on an older default.
 
-**Yarn 4:** Root `package.json` has `"packageManager": "yarn@4.9.1"`. Hosts that ship Yarn 1 by default ([Render](https://render.com/docs/node-version), older CI images, etc.) must turn on **Corepack** before any `yarn` command: `corepack enable` (and usually `corepack prepare yarn@4.9.1 --activate`). The build/start commands below include that.
+**Yarn 4:** Root `package.json` has `"packageManager": "yarn@4.9.1"`. If the platform’s global `yarn` is v1 (common on Render), **do not** set the Render build command to `yarn install …` alone — Yarn will refuse before Corepack runs. Use the **`npm run …` scripts** below (they enable Corepack, then invoke Yarn 4).
 
 ---
 
@@ -20,8 +20,8 @@ Deploy the **server first**, copy its `https://…` URL, then set **`VITE_SOCKET
 
    | Field | Value |
    |--------|--------|
-   | **Build command** | `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace pokerserver build` |
-   | **Start command** | `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn workspace pokerserver start` |
+   | **Build command** | **`npm run render-build`** *(recommended)* — or the same one-liner: `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace pokerserver build` |
+   | **Start command** | **`npm run render-start`** *(recommended)* — or: `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn workspace pokerserver start` |
 
 4. **Environment** (optional but useful):
 
@@ -47,7 +47,7 @@ Any static host with Git integration works (Netlify, Vercel, etc.). Below is a *
    | Field | Value |
    |--------|--------|
    | **Root directory** | `.` (repo root) |
-   | **Build command** | `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace poker-game build` |
+   | **Build command** | **`npm run pages-build`** *(recommended)* — or the same long `corepack enable && …` line as above for shared + poker-game |
    | **Build output directory** | `poker-game/dist` |
 
 3. **Environment variables** (Production — and Preview if you want PR previews to hit a real API):

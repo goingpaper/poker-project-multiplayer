@@ -15,7 +15,10 @@
     "dev": "yarn workspace poker-shared build && concurrently -k -n server,client -c blue,green \"yarn workspace pokerserver dev\" \"yarn workspace poker-game dev\"",
     "test": "yarn workspace pokerserver test && yarn workspace poker-game test",
     "typecheck": "yarn workspace poker-game typecheck",
-    "start": "yarn build && concurrently -k -n server,client -c blue,green \"yarn workspace pokerserver start\" \"yarn workspace poker-game preview --host 127.0.0.1\""
+    "start": "yarn build && concurrently -k -n server,client -c blue,green \"yarn workspace pokerserver start\" \"yarn workspace poker-game preview --host 127.0.0.1\"",
+    "render-build": "corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace pokerserver build",
+    "render-start": "corepack enable && corepack prepare yarn@4.9.1 --activate && yarn workspace pokerserver start",
+    "pages-build": "corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace poker-game build"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
