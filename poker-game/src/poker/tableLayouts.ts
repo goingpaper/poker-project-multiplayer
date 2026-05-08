@@ -115,12 +115,3 @@ export function seatLabel(playerId: string, viewerId: string, slotIndex: number,
   if (totalSeats === 2) return 'Opponent';
   return `Seat ${slotIndex + 1}`;
 }
-
-export function getBetOnFeltPositions(playerCount: number): SeatPos[] {
-  const seats = getSeatPositions(playerCount);
-  const pull = 0.52;
-  return seats.map(({ top, left }) => ({
-    top: 50 + (top - 50) * pull,
-    left: 50 + (left - 50) * pull,
-  }));
-}

@@ -23,6 +23,16 @@ export type HandHistoryEntry = LastHandResult & {
   handNumber: number;
 };
 
+export type LastPlayerActionKind = "check" | "call" | "raise";
+
+/** Emitted after a voluntary betting action on the **current street** only; cleared when a new betting street begins. */
+export interface LastPlayerAction {
+  playerId: PlayerId;
+  kind: LastPlayerActionKind;
+  /** Chips committed by this player on the current street **after** the action (`call` / `raise-to`). */
+  streetTotal?: number;
+}
+
 /** In play or showdown; emitted as JSON to clients. */
 export interface ActiveHandState {
   potSize: number;
@@ -47,6 +57,11 @@ export interface ActiveHandState {
   table?: TablePublicMeta;
   /** Legal raise-to total for the current actor (this street). Helps PL-OMA clients cap the slider. */
   currentMaxRaiseTo?: number;
+  /**
+   * Server-authoritative: last voluntary action taken on **this betting street**.
+   * Omitted whenever a street rolls (fresh betting round — clients should stop showing prior-street banners).
+   */
+  lastAction?: LastPlayerAction;
 }
 
 /** Someone busted — minimal payload. */
