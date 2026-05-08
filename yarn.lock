@@ -2386,15 +2386,15 @@ __metadata:
 
 "poker-shared@file:../poker-shared::locator=poker-game%40workspace%3Apoker-game":
   version: 0.0.1
-  resolution: "poker-shared@file:../poker-shared#../poker-shared::hash=933e5b&locator=poker-game%40workspace%3Apoker-game"
-  checksum: 10c0/c1013fcc5ec3d4838ec378bdedab60118cfbf073c68fa79a5e5a3b9f8e203f9a0cf82583a3528fa5273a299a8740827a8ee501c90a658f12c4b5e4d07e4debaf
+  resolution: "poker-shared@file:../poker-shared#../poker-shared::hash=4b660e&locator=poker-game%40workspace%3Apoker-game"
+  checksum: 10c0/3ed5ab5c2a47d9204c682eae329f50799f92db0feae95dad48653b410f14f32d685a4c008be457db86635e7e84c71e7206a2369985927f27b26e0ee1f54b3b06
   languageName: node
   linkType: hard
 
 "poker-shared@file:../poker-shared::locator=pokerserver%40workspace%3Apoker-server":
   version: 0.0.1
-  resolution: "poker-shared@file:../poker-shared#../poker-shared::hash=933e5b&locator=pokerserver%40workspace%3Apoker-server"
-  checksum: 10c0/c1013fcc5ec3d4838ec378bdedab60118cfbf073c68fa79a5e5a3b9f8e203f9a0cf82583a3528fa5273a299a8740827a8ee501c90a658f12c4b5e4d07e4debaf
+  resolution: "poker-shared@file:../poker-shared#../poker-shared::hash=4b660e&locator=pokerserver%40workspace%3Apoker-server"
+  checksum: 10c0/3ed5ab5c2a47d9204c682eae329f50799f92db0feae95dad48653b410f14f32d685a4c008be457db86635e7e84c71e7206a2369985927f27b26e0ee1f54b3b06
   languageName: node
   linkType: hard
 
