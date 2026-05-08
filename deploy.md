@@ -8,6 +8,8 @@ Deploy the **server first**, copy its `https://…` URL, then set **`VITE_SOCKET
 
 **Node:** The repo expects **Node ≥ 24** (`engines` in root and packages). Set **`NODE_VERSION=24`** (or equivalent) on each host if builds fail on an older default.
 
+**Yarn 4:** Root `package.json` has `"packageManager": "yarn@4.9.1"`. Hosts that ship Yarn 1 by default ([Render](https://render.com/docs/node-version), older CI images, etc.) must turn on **Corepack** before any `yarn` command: `corepack enable` (and usually `corepack prepare yarn@4.9.1 --activate`). The build/start commands below include that.
+
 ---
 
 ## 1. API + Socket.IO — Render (Web Service)
@@ -18,8 +20,8 @@ Deploy the **server first**, copy its `https://…` URL, then set **`VITE_SOCKET
 
    | Field | Value |
    |--------|--------|
-   | **Build command** | `yarn install --immutable && yarn workspace poker-shared build && yarn workspace pokerserver build` |
-   | **Start command** | `yarn workspace pokerserver start` |
+   | **Build command** | `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace pokerserver build` |
+   | **Start command** | `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn workspace pokerserver start` |
 
 4. **Environment** (optional but useful):
 
@@ -45,7 +47,7 @@ Any static host with Git integration works (Netlify, Vercel, etc.). Below is a *
    | Field | Value |
    |--------|--------|
    | **Root directory** | `.` (repo root) |
-   | **Build command** | `yarn install --immutable && yarn workspace poker-shared build && yarn workspace poker-game build` |
+   | **Build command** | `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable && yarn workspace poker-shared build && yarn workspace poker-game build` |
    | **Build output directory** | `poker-game/dist` |
 
 3. **Environment variables** (Production — and Preview if you want PR previews to hit a real API):
